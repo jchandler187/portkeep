@@ -6,30 +6,21 @@ import (
 	"path/filepath"
 )
 
-// DataDir returns ~/.portkeep, creating it if needed.
-func DataDir() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		home = "."
+// DefaultDir is the base directory for all PortKeep data.
+func DefaultDir() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".portkeep")
+}
+
+// DBPath returns the path to the SQLite database.
+func DBPath() string {
+	if p := os.Getenv("PORTKEEP_DB"); p != "" {
+		return p
 	}
-	dir := filepath.Join(home, ".portkeep")
-	_ = os.MkdirAll(dir, 0700)
-	return dir
+	return filepath.Join(DefaultDir(), "portkeep.db")
 }
 
-// RegistryPath returns the path to the port registry JSON file.
-func RegistryPath() string {
-	return filepath.Join(DataDir(), "registry.json")
-}
-
-// CacheDir returns the path to the threat-intel cache directory.
+// CacheDir returns the directory for threat intel cache.
 func CacheDir() string {
-	dir := filepath.Join(DataDir(), "cache")
-	_ = os.MkdirAll(dir, 0700)
-	return dir
-}
-
-// CachePath returns the path to a named source's cache file.
-func CachePath(source string) string {
-	return filepath.Join(CacheDir(), source+".json")
+	return filepath.Join(DefaultDir(), "cache")
 }

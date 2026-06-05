@@ -1,35 +1,45 @@
 package cmd
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
+	"github.com/jchandler187/portkeep/internal/config"
 	"github.com/spf13/cobra"
 )
 
-const version = "0.1.0"
+var (
+	db         *sql.DB
+	nodeFlag   string
+	jsonOutput bool
+	quietMode  bool
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "portkeep",
-	Short: "PortKeep — self-hosted port registry with live threat-intel scoring",
+	Short: "Port management + security for self-hosted infrastructure",
 	Long: `PortKeep registers every port your machines expose, prevents conflicts,
-and scores your attack surface against 9 live threat-intel feeds:
-CISA-KEV, EPSS, OSV, ThreatFox, URLhaus, MalwareBazaar, Feodo,
-Semgrep rules, and YARA rules.
+and scores your attack surface against threat intelligence.
 
 No cloud account. No agent. One binary.`,
-	SilenceUsage: true,
-}
-
-var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print PortKeep version",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("portkeep v%s\n", version)
+	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		var err error
+		dbPath := config.DBPath()
+		db, err = openDB(dbPath)
+		if err != nil {
+			return fmt.Errorf("open db: %w", err)
+		}
+		return nil
+	},
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		if db != nil {
+			return db.Close()
+		}
+		return nil
 	},
 }
 
-// Execute runs the root command.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
@@ -37,13 +47,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(scanCmd)
-	rootCmd.AddCommand(registerCmd)
-	rootCmd.AddCommand(unregisterCmd)
-	rootCmd.AddCommand(listCmd)
-	rootCmd.AddCommand(scoreCmd)
-	rootCmd.AddCommand(syncCmd)
-	rootCmd.AddCommand(diffCmd)
-	rootCmd.AddCommand(reportCmd)
+	rootCmd.PersistentFlags().StringVarP(&nodeFlag, "node", "n", "localhost", "node name")
+	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "JSON output")
+	rootCmd.PersistentFlags().BoolVarP(&quietMode, "quiet", "q", false, "errors only")
 }

@@ -3,53 +3,76 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
+	"time"
 
-	"github.com/jchandler187/portkeep/internal/config"
-	"github.com/jchandler187/portkeep/internal/registry"
 	"github.com/spf13/cobra"
 )
 
-var listJSON bool
-
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all registered ports",
+	Short: "List all registered port claims",
+	Example: `  portkeep list
+  portkeep list --node node2
+  portkeep list --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		reg, err := registry.Load(config.RegistryPath())
+		rows, err := db.Query(`SELECT port, protocol, service_name, declared_bind, port_range, owner, note, created_at
+			FROM claims WHERE node_name = ? ORDER BY port`, nodeFlag)
 		if err != nil {
-			return fmt.Errorf("loading registry: %w", err)
+			return err
+		}
+		defer rows.Close()
+
+		type ClaimRow struct {
+			Port         int       `json:"port"`
+			Protocol     string    `json:"protocol"`
+			Service      string    `json:"service"`
+			DeclaredBind string   `json:"declared_bind,omitempty"`
+			PortRange    string    `json:"range,omitempty"`
+			Owner        string    `json:"owner,omitempty"`
+			Note         string    `json:"note,omitempty"`
+			CreatedAt    time.Time `json:"created_at"`
 		}
 
-		if listJSON {
-			enc := json.NewEncoder(os.Stdout)
-			enc.SetIndent("", "  ")
-			return enc.Encode(reg.Entries)
+		var claims []ClaimRow
+		for rows.Next() {
+			var c ClaimRow
+			rows.Scan(&c.Port, &c.Protocol, &c.Service, &c.DeclaredBind, &c.PortRange, &c.Owner, &c.Note, &c.CreatedAt)
+			claims = append(claims, c)
 		}
 
-		if len(reg.Entries) == 0 {
-			fmt.Println("Registry is empty. Use 'portkeep register <port> <service>' to add entries.")
+		if jsonOutput {
+			data, _ := json.MarshalIndent(claims, "", "  ")
+			fmt.Println(string(data))
 			return nil
 		}
 
-		fmt.Printf("\n%-10s %-8s %-20s %-30s %s\n",
-			"PORT", "PROTO", "SERVICE", "DESCRIPTION", "REGISTERED")
-		fmt.Printf("%-10s %-8s %-20s %-30s %s\n",
-			"----", "-----", "-------", "-----------", "----------")
-
-		for _, e := range reg.Entries {
-			desc := e.Description
-			if len(desc) > 28 {
-				desc = desc[:25] + "..."
-			}
-			fmt.Printf("%-10d %-8s %-20s %-30s %s\n",
-				e.Port, e.Protocol, e.Service, desc, e.RegisteredAt[:10])
+		if len(claims) == 0 {
+			fmt.Printf("No ports claimed on %s. Start with: portkeep claim <port> <service>\n", nodeFlag)
+			return nil
 		}
-		fmt.Printf("\n%d registered port(s)\n", len(reg.Entries))
+
+		fmt.Printf("\n%s — %d claimed ports\n\n", nodeFlag, len(claims))
+		fmt.Printf("%-8s %-6s %-20s %-15s %-10s %s\n", "PORT", "PROTO", "SERVICE", "BIND", "RANGE", "NOTE")
+		for _, c := range claims {
+			bind := c.DeclaredBind
+			if bind == "" {
+				bind = "—"
+			}
+			rng := c.PortRange
+			if rng == "" {
+				rng = "—"
+			}
+			note := c.Note
+			if len(note) > 30 {
+				note = note[:27] + "..."
+			}
+			fmt.Printf("%-8d %-6s %-20s %-15s %-10s %s\n", c.Port, c.Protocol, c.Service, bind, rng, note)
+		}
+		fmt.Println()
 		return nil
 	},
 }
 
 func init() {
-	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output as JSON")
+	rootCmd.AddCommand(listCmd)
 }

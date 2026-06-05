@@ -23,10 +23,23 @@ var rootCmd = &cobra.Command{
 	Use:   "portkeep",
 	Short: "Port management + security for self-hosted infrastructure",
 	Long: `PortKeep registers every port your machines expose, prevents conflicts,
-and scores your attack surface against threat intelligence.
+and scores your attack surface against live threat intelligence.
 
 No cloud account. No agent. One binary.`,
+	// RunE prints a short usage hint when portkeep is invoked with no subcommand.
+	// Interactive mode is planned for v0.2.
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Println("PortKeep — port management + security for self-hosted infrastructure")
+		fmt.Println()
+		fmt.Println("Run 'portkeep --help' to see available commands.")
+		fmt.Println("Interactive mode is planned for v0.2.")
+		return nil
+	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Skip DB open for the root "no-op" invocation
+		if cmd.Name() == "portkeep" {
+			return nil
+		}
 		var err error
 		dbPath := config.DBPath()
 		db, err = openDB(dbPath)

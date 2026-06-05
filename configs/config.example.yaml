@@ -1,5 +1,8 @@
-# PortKeep Example Config
+# PortKeep Example Configuration
+# Copy to ~/.portkeep/config.yaml and edit as needed.
+# Most settings are optional; PortKeep works with zero config.
 
+# ── Nodes ─────────────────────────────────────────────────────────────────────
 nodes:
   node1:
     host: 127.0.0.1
@@ -11,12 +14,14 @@ nodes:
     labels:
       - dev
 
+# ── Port ranges ───────────────────────────────────────────────────────────────
 ranges:
-  system: [1, 1023]
-  reserved: [1024, 4999]
+  system:    [1, 1023]
+  reserved:  [1024, 4999]
   dashboard: [5000, 9999]
   ephemeral: [10000, 65535]
 
+# ── Network segments ──────────────────────────────────────────────────────────
 segments:
   loopback:
     - 127.0.0.0/8
@@ -27,10 +32,22 @@ segments:
   tailscale:
     - 100.64.0.0/10
 
+# ── Threat intelligence ───────────────────────────────────────────────────────
+# ABUSE_CH_AUTH_KEY enables three additional abuse.ch sources:
+#   ThreatFox, URLhaus, MalwareBazaar (all require Auth-Key since 2025-06-30).
+# Get your free key at: https://auth.abuse.ch
+#
+# Set via environment variable (recommended — keeps key out of config files):
+#   export ABUSE_CH_AUTH_KEY=your-key-here
+#
+# The six no-key sources always sync regardless of this setting:
+#   CISA-KEV, EPSS, Feodo, Emerging Threats, Blocklist.de, DShield/SANS
+
+# ── Alerting ──────────────────────────────────────────────────────────────────
 alerts:
   destinations:
     telegram:
-      chat_id: "6148810724"
+      chat_id: "YOUR_CHAT_ID"
       bot_token: ${TELEGRAM_BOT_TOKEN}
   rules:
     - on: rogue
@@ -41,18 +58,7 @@ alerts:
       threshold: 15
       destination: telegram
 
+# ── Scan ──────────────────────────────────────────────────────────────────────
 scan:
-  interval: 300
+  interval: 300        # daemon scan interval in seconds
   include_docker: false
-  nmap_path: /usr/bin/nmap
-
-nvd:
-  cache_dir: ~/.portkeep/nvd-cache
-  refresh_days: 7
-
-shodan:
-  api_key: ${SHODAN_API_KEY}
-  cache_hours: 24
-
-compliance:
-  templates_dir: ~/.portkeep/compliance

@@ -4,16 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/jchandler187/portkeep/internal/config"
 	"github.com/jchandler187/portkeep/internal/firewall"
 	"github.com/jchandler187/portkeep/internal/portscanner"
+	"github.com/jchandler187/portkeep/internal/threatintel"
 	"github.com/spf13/cobra"
 )
 
 var auditCmd = &cobra.Command{
 	Use:   "audit",
-	Short: "Full security audit — score + risk flags + firewall check",
+	Short: "Full security audit — score + risk flags + threat intel + firewall check",
 	Long: `Run a complete security audit of all listening ports.
-Produces per-port risk flags, an overall exposure score, and firewall cross-reference.`,
+Produces per-port risk flags, an overall exposure score, firewall cross-reference,
+and threat intelligence findings (C2 port matches, CISA-KEV CVE hits).
+Run 'portkeep sync' first to populate the threat intel cache.`,
 	Example: `  portkeep audit
   portkeep audit --score
   portkeep audit --fix`,
@@ -21,14 +25,18 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 		scoreOnly, _ := cmd.Flags().GetBool("score")
 		showFix, _ := cmd.Flags().GetBool("fix")
 
+		// Load threat intel cache (populated by 'portkeep sync')
+		tiDB := threatintel.Load(config.CacheDir())
+
 		// Scan current ports
 		ports, err := portscanner.Scan()
 		if err != nil {
 			return fmt.Errorf("scan: %w", err)
 		}
 
-		// Get claims from DB
-		claimRows, _ := db.Query(`SELECT port, protocol, service_name, declared_bind FROM claims WHERE node_name = ?`, nodeFlag)
+		// Load claims for this node
+		claimRows, _ := db.Query(
+			`SELECT port, protocol, service_name, declared_bind FROM claims WHERE node_name = ?`, nodeFlag)
 		type claimInfo struct {
 			port     int
 			proto    string
@@ -45,16 +53,15 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 			}
 		}
 
-		// Score each port
 		type PortAudit struct {
-			Port      int    `json:"port"`
-			Protocol  string `json:"protocol"`
-			BindAddr  string `json:"bind_addr"`
-			Scope     string `json:"scope"`
-			Score     int    `json:"score"`
-			RiskLevel string `json:"risk_level"`
-			Claimed   bool   `json:"claimed"`
-			Service   string `json:"service,omitempty"`
+			Port      int      `json:"port"`
+			Protocol  string   `json:"protocol"`
+			BindAddr  string   `json:"bind_addr"`
+			Scope     string   `json:"scope"`
+			Score     int      `json:"score"`
+			RiskLevel string   `json:"risk_level"`
+			Claimed   bool     `json:"claimed"`
+			Service   string   `json:"service,omitempty"`
 			Flags     []string `json:"flags"`
 		}
 
@@ -62,6 +69,8 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 		totalScore := 0
 		scopeCounts := map[string]int{"loopback": 0, "lan": 0, "tailscale": 0, "wan": 0, "wildcard": 0}
 		criticalCount, highCount, warningCount := 0, 0, 0
+		kevHitCount := 0
+		c2HitCount := 0
 
 		for _, p := range ports {
 			scope := classifyBind(p.Address)
@@ -77,10 +86,10 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 			var flags []string
 			score := 0
 
-			// Bind scope scoring
+			// ── Bind scope scoring ──────────────────────────────────────────
 			switch scope {
 			case "loopback":
-				score += 0
+				// no penalty
 			case "lan":
 				score += 5
 				flags = append(flags, "LAN bind")
@@ -95,19 +104,19 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 				flags = append(flags, "wildcard bind (0.0.0.0/::)")
 			}
 
-			// Unclaimed penalty
+			// ── Unclaimed penalty ──────────────────────────────────────────
 			if !claimed {
 				score += 5
 				flags = append(flags, "unclaimed")
 			}
 
-			// Well-known port danger
+			// ── Well-known port ────────────────────────────────────────────
 			if p.Port < 1024 && scope != "loopback" {
 				score += 5
 				flags = append(flags, "privileged port exposed")
 			}
 
-			// Specific dangerous ports
+			// ── High-risk service ports ────────────────────────────────────
 			dangerPorts := map[int]string{
 				22:   "SSH exposed",
 				23:   "Telnet (!)",
@@ -120,13 +129,38 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 				flags = append(flags, note)
 			}
 
-			// Risk level
+			// ── Threat intel: C2 port check ────────────────────────────────
+			if c2 := tiDB.C2Entries(p.Port); len(c2) > 0 {
+				score += 30
+				malware := c2[0].Malware
+				if malware == "" {
+					malware = "unknown malware"
+				}
+				flags = append(flags, fmt.Sprintf("THREAT: C2 port (%s/%s)", c2[0].Source, malware))
+				c2HitCount++
+			}
+
+			// ── Threat intel: CISA-KEV CVE check ──────────────────────────
+			// Match against process name or claimed service name.
+			serviceHint := service
+			if serviceHint == "" {
+				serviceHint = p.Process
+			}
+			if serviceHint != "" {
+				if kevMatches := tiDB.KEVMatchesForService(serviceHint); len(kevMatches) > 0 {
+					score += 10
+					flags = append(flags, fmt.Sprintf("THREAT: %d active KEV CVE(s) for %s", len(kevMatches), serviceHint))
+					kevHitCount++
+				}
+			}
+
+			// ── Risk level ─────────────────────────────────────────────────
 			riskLevel := "info"
 			switch {
-			case score >= 25:
+			case score >= 35:
 				riskLevel = "critical"
 				criticalCount++
-			case score >= 15:
+			case score >= 20:
 				riskLevel = "high"
 				highCount++
 			case score >= 5:
@@ -142,8 +176,8 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 			})
 		}
 
-		// Normalize score to 0-100
-		maxScore := len(ports) * 50 // theoretical max
+		// Normalize exposure score to 0–100
+		maxScore := len(ports) * 50 // theoretical max per port
 		exposureScore := 0
 		if maxScore > 0 {
 			exposureScore = (totalScore * 100) / maxScore
@@ -159,9 +193,12 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 
 		if jsonOutput {
 			data, _ := json.MarshalIndent(map[string]interface{}{
-				"exposure_score": exposureScore,
-				"ports":          audits,
-				"scope_counts":   scopeCounts,
+				"exposure_score":  exposureScore,
+				"ports":           audits,
+				"scope_counts":    scopeCounts,
+				"threat_intel":    tiDB.AgeString(),
+				"kev_hits":        kevHitCount,
+				"c2_hits":         c2HitCount,
 				"summary": map[string]int{
 					"critical": criticalCount,
 					"high":     highCount,
@@ -172,12 +209,28 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 			return nil
 		}
 
-		// Display
-		scoreBar := scoreBar(exposureScore)
+		// ── Human-readable output ──────────────────────────────────────────
+		scoreBar := buildScoreBar(exposureScore)
 		fmt.Printf("\n╔══════════════════════════════════════════════════╗\n")
-		fmt.Printf("║  PortKeep — Security Audit  ·  %s        ║\n", nodeFlag)
-		fmt.Printf("║  Exposure Score: %d/100  %s  ║\n", exposureScore, scoreBar)
+		fmt.Printf("║  PortKeep — Security Audit  ·  %-14s  ║\n", nodeFlag)
+		fmt.Printf("║  Exposure Score: %3d/100  %s ║\n", exposureScore, scoreBar)
 		fmt.Printf("╚══════════════════════════════════════════════════╝\n\n")
+
+		// Threat intel status
+		fmt.Printf("THREAT INTEL  %s\n", tiDB.AgeString())
+		if c2HitCount > 0 {
+			fmt.Printf("  ⛔ %d C2 port match(es) found\n", c2HitCount)
+		}
+		if kevHitCount > 0 {
+			fmt.Printf("  🔴 %d port(s) running software with active CISA-KEV CVEs\n", kevHitCount)
+		}
+		if c2HitCount == 0 && kevHitCount == 0 && tiDB.LastSync != "" {
+			fmt.Println("  ✓ no C2 port or KEV CVE matches")
+		}
+		if tiDB.LastSync == "" {
+			fmt.Println("  ℹ run 'portkeep sync' to enable threat intel checks")
+		}
+		fmt.Println()
 
 		// Scope breakdown
 		fmt.Println("BIND SCOPE BREAKDOWN")
@@ -188,16 +241,20 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 			}
 		}
 
-		// Critical findings
+		// Critical / high findings
 		if criticalCount > 0 || highCount > 0 {
-			fmt.Println("\nCRITICAL FINDINGS")
+			fmt.Println("\nFINDINGS")
 			for _, a := range audits {
 				if a.RiskLevel == "critical" || a.RiskLevel == "high" {
 					icon := "🔴"
-					if a.RiskLevel == "critical" && a.Scope == "wildcard" {
+					if a.RiskLevel == "critical" {
 						icon = "⛔"
 					}
-					fmt.Printf("  %s port %d (%s) — %s\n", icon, a.Port, a.Service, joinFlags(a.Flags))
+					svc := a.Service
+					if svc == "" {
+						svc = "unknown"
+					}
+					fmt.Printf("  %s port %d/%s (%s) — %s\n", icon, a.Port, a.Protocol, svc, joinFlags(a.Flags))
 					if showFix {
 						fmt.Printf("     Fix: bind to 127.0.0.1 or restrict via firewall\n")
 					}
@@ -205,7 +262,7 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 			}
 		}
 
-		// Firewall check
+		// Firewall cross-reference
 		fwType := firewall.DetectFirewall()
 		if fwType != "none" {
 			fmt.Printf("\nFIREWALL (%s)\n", fwType)
@@ -229,7 +286,7 @@ Produces per-port risk flags, an overall exposure score, and firewall cross-refe
 
 		fmt.Printf("\nSUMMARY\n")
 		fmt.Printf("  %d critical · %d high · %d warnings\n", criticalCount, highCount, warningCount)
-		fmt.Printf("  Score: %d/100\n\n", exposureScore)
+		fmt.Printf("  Exposure score: %d/100\n\n", exposureScore)
 
 		return nil
 	},
@@ -241,7 +298,7 @@ func init() {
 	rootCmd.AddCommand(auditCmd)
 }
 
-func scoreBar(score int) string {
+func buildScoreBar(score int) string {
 	filled := score / 5
 	bar := ""
 	for i := 0; i < 20; i++ {
@@ -251,16 +308,14 @@ func scoreBar(score int) string {
 			bar += "░"
 		}
 	}
-
-	label := "LOW"
+	label := "LOW     "
 	if score >= 60 {
 		label = "CRITICAL"
 	} else if score >= 40 {
-		label = "HIGH"
+		label = "HIGH    "
 	} else if score >= 20 {
 		label = "MODERATE"
 	}
-
 	return fmt.Sprintf("%s %s", bar, label)
 }
 

@@ -257,6 +257,9 @@ func resolveProcInfo(ports []OpenPort, proto string) {
 		return
 	}
 
+	// Pre-build inode→port map by reading /proc/net/{tcp,udp} ONCE
+	inodeToPort := buildInodeMap(proto, portMap)
+
 	entries, err := os.ReadDir("/proc")
 	if err != nil {
 		return
@@ -274,7 +277,6 @@ func resolveProcInfo(ports []OpenPort, proto string) {
 		cmdline, _ := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pid))
 		procName := processName(string(cmdline))
 
-		// Read /proc/PID/fd/ for socket inodes this PID holds
 		fdDir := fmt.Sprintf("/proc/%d/fd", pid)
 		fdEntries, err := os.ReadDir(fdDir)
 		if err != nil {
@@ -296,28 +298,27 @@ func resolveProcInfo(ports []OpenPort, proto string) {
 				continue
 			}
 
-			// Check if this inode matches a port in /proc/net/{tcp,udp}
-			portNum := findPortForInode(proto, inode, portMap)
-			if portNum > 0 {
-				if indices, ok := portMap[portNum]; ok {
+			if portNum, ok := inodeToPort[inode]; ok {
+				if indices, ok2 := portMap[portNum]; ok2 {
 					for _, idx := range indices {
 						if ports[idx].PID == 0 {
 							ports[idx].PID = pid
 							ports[idx].Process = procName
 						}
 					}
-			}
+				}
 			}
 		}
 	}
 }
 
-// findPortForInode reads /proc/net/{tcp,udp} to find which port an inode corresponds to.
-func findPortForInode(proto string, inode uint64, portMap map[int][]int) int {
+// buildInodeMap reads /proc/net/{tcp,udp} ONCE and returns inode→port map.
+func buildInodeMap(proto string, portMap map[int][]int) map[uint64]int {
+	result := make(map[uint64]int)
 	path := "/proc/net/" + proto
 	f, err := os.Open(path)
 	if err != nil {
-		return 0
+		return result
 	}
 	defer f.Close()
 
@@ -329,8 +330,6 @@ func findPortForInode(proto string, inode uint64, portMap map[int][]int) int {
 		if len(fields) < 10 {
 			continue
 		}
-
-		// Parse local address to get port
 		localAddr := fields[1]
 		parts := strings.SplitN(localAddr, ":", 2)
 		if len(parts) != 2 {
@@ -340,20 +339,16 @@ func findPortForInode(proto string, inode uint64, portMap map[int][]int) int {
 		if err != nil {
 			continue
 		}
-
 		if _, ok := portMap[int(portNum)]; !ok {
 			continue
 		}
-
-		entryInode, err := strconv.ParseUint(fields[9], 10, 64)
+		inode, err := strconv.ParseUint(fields[9], 10, 64)
 		if err != nil {
 			continue
 		}
-		if entryInode == inode {
-			return int(portNum)
-		}
+		result[inode] = int(portNum)
 	}
-	return 0
+	return result
 }
 
 // processName extracts the basename from a /proc/PID/cmdline string.

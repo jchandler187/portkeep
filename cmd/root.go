@@ -14,6 +14,9 @@ var (
 	nodeFlag   string
 	jsonOutput bool
 	quietMode  bool
+	version    = "dev"
+	commit     = "none"
+	buildDate  = "unknown"
 )
 
 var rootCmd = &cobra.Command{
@@ -50,4 +53,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&nodeFlag, "node", "n", "localhost", "node name")
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "JSON output")
 	rootCmd.PersistentFlags().BoolVarP(&quietMode, "quiet", "q", false, "errors only")
+
+	versionCmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print version info",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("portkeep %s (commit: %s, built: %s)\n", version, commit, buildDate)
+		},
+	}
+	rootCmd.AddCommand(versionCmd)
 }

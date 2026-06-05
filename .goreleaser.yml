@@ -47,6 +47,6 @@ brews:
   - repository:
       owner: jchandler187
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     homepage: https://github.com/jchandler187/portkeep
     description: Port management + security for self-hosted infrastructure

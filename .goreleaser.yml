@@ -50,3 +50,4 @@ brews:
     directory: Formula
     homepage: https://github.com/jchandler187/portkeep
     description: Port management + security for self-hosted infrastructure
+    token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"

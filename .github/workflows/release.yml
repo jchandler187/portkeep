@@ -40,7 +40,7 @@ jobs:
             if [ "$OS" = "windows" ]; then SUFFIX=".exe"; fi
             echo "Building $OS/$ARCH..."
             CGO_ENABLED=0 GOOS="$OS" GOARCH="$ARCH" go build -trimpath \
-              -ldflags="-s -w -X github.com/jchandler187/portkeep/cmd.version=$VERSION -X github.com/jchandler187/portkeep/cmd.commit=$COMMIT -X github.com/jchandler187/portkeep/cmd.buildDate=$BUILT" \
+              -ldflags="-s -w -X github.com/lowwattlabs/portkeep/cmd.version=$VERSION -X github.com/lowwattlabs/portkeep/cmd.commit=$COMMIT -X github.com/lowwattlabs/portkeep/cmd.buildDate=$BUILT" \
               -o "dist/portkeep_${OS}_${ARCH}${SUFFIX}"
           done
 

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jchandler187/portkeep/internal/alert"
+	"github.com/lowwattlabs/portkeep/internal/alert"
 	"github.com/spf13/cobra"
 )
 

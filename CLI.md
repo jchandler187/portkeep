@@ -341,7 +341,7 @@ Examples:
   portkeep drift --quiet           # CI/cron drift check
   portkeep claim next --range dev  # find open port
 
-Docs: https://github.com/jchandler187/portkeep
+Docs: https://github.com/lowwattlabs/portkeep
 ```
 
 ---

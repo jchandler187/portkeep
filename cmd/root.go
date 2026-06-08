@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jchandler187/portkeep/internal/config"
+	"github.com/lowwattlabs/portkeep/internal/config"
 	"github.com/spf13/cobra"
 )
 

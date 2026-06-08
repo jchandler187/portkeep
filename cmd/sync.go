@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/jchandler187/portkeep/internal/config"
-	"github.com/jchandler187/portkeep/internal/threatintel"
+	"github.com/lowwattlabs/portkeep/internal/config"
+	"github.com/lowwattlabs/portkeep/internal/threatintel"
 	"github.com/spf13/cobra"
 )
 

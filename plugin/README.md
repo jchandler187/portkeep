@@ -17,15 +17,15 @@ Discover, claim, and audit every listening port across local and remote nodes. D
 
 ## Requirements
 
-- **PortKeep binary** must be installed and on PATH. Download from [GitHub Releases](https://github.com/jchandler187/portkeep/releases).
+- **PortKeep binary** must be installed and on PATH. Download from [GitHub Releases](https://github.com/lowwattlabs/portkeep/releases).
 
 ```bash
 # Linux amd64
-curl -sL https://github.com/jchandler187/portkeep/releases/latest/download/portkeep_linux_amd64 -o portkeep
+curl -sL https://github.com/lowwattlabs/portkeep/releases/latest/download/portkeep_linux_amd64 -o portkeep
 chmod +x portkeep && sudo mv portkeep /usr/local/bin/
 
 # macOS Apple Silicon
-curl -sL https://github.com/jchandler187/portkeep/releases/latest/download/portkeep_darwin_arm64 -o portkeep
+curl -sL https://github.com/lowwattlabs/portkeep/releases/latest/download/portkeep_darwin_arm64 -o portkeep
 chmod +x portkeep && sudo mv portkeep /usr/local/bin/
 ```
 
@@ -70,9 +70,9 @@ portkeep audit --all
 
 ## Links
 
-- **GitHub**: https://github.com/jchandler187/portkeep
-- **ClawHub**: https://clawhub.ai/jchandler187/portkeep
-- **CLI docs**: https://github.com/jchandler187/portkeep#readme
+- **GitHub**: https://github.com/lowwattlabs/portkeep
+- **ClawHub**: https://clawhub.ai/lowwattlabs/portkeep
+- **CLI docs**: https://github.com/lowwattlabs/portkeep#readme
 
 ## License
 

@@ -1,5 +1,5 @@
 {
-  "name": "portkeep",
+  "name": "@lowwattlabs/portkeep",
   "version": "1.0.9",
   "description": "Port management and security auditing for self-hosted infrastructure. Discover, claim, and audit every listening port across local and remote nodes. Detect drift, score attack surface, and cross-reference against live threat intelligence.",
   "type": "module",
@@ -40,5 +40,13 @@
   },
   "bundledDependencies": [
     "typebox"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lowwattlabs/portkeep.git"
+  },
+  "homepage": "https://github.com/lowwattlabs/portkeep",
+  "bugs": {
+    "url": "https://github.com/lowwattlabs/portkeep/issues"
+  }
 }

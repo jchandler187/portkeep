@@ -1,4 +1,4 @@
-module github.com/jchandler187/portkeep
+module github.com/lowwattlabs/portkeep
 
 go 1.22
 

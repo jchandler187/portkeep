@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jchandler187/portkeep/internal/portscanner"
-	"github.com/jchandler187/portkeep/internal/sshclient"
+	"github.com/lowwattlabs/portkeep/internal/portscanner"
+	"github.com/lowwattlabs/portkeep/internal/sshclient"
 	"github.com/spf13/cobra"
 )
 

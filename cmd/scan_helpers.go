@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jchandler187/portkeep/internal/portscanner"
+	"github.com/lowwattlabs/portkeep/internal/portscanner"
 )
 
 func parseSSOutput(output string) ([]portscanner.OpenPort, error) {

@@ -15,7 +15,7 @@ Port management and security auditing for self-hosted infrastructure.
 
 ## Requirements
 
-- PortKeep binary: download from [GitHub Releases](https://github.com/jchandler187/portkeep/releases)
+- PortKeep binary: download from [GitHub Releases](https://github.com/lowwattlabs/portkeep/releases)
 - Default binary path: `/usr/local/bin/portkeep` (override with `binaryPath` config or `$PORTKEEP_BIN`)
 
 ## Network Disclosures

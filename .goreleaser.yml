@@ -13,7 +13,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/jchandler187/portkeep/cmd.version={{.Version}} -X github.com/jchandler187/portkeep/cmd.commit={{.Commit}} -X github.com/jchandler187/portkeep/cmd.buildDate={{.Date}}
+      - -s -w -X github.com/lowwattlabs/portkeep/cmd.version={{.Version}} -X github.com/lowwattlabs/portkeep/cmd.commit={{.Commit}} -X github.com/lowwattlabs/portkeep/cmd.buildDate={{.Date}}
 
 archives:
   - format: tar.gz
@@ -39,14 +39,14 @@ nfpms:
     formats:
       - deb
       - rpm
-    maintainer: Jason Chandler <jchandler187@gmail.com>
+    maintainer: Jason Chandler <lowwattlabs@proton.me>
     description: Port management + security for self-hosted infrastructure
     license: MIT
 
 brews:
   - repository:
-      owner: jchandler187
+      owner: lowwattlabs
       name: homebrew-tap
     directory: Formula
-    homepage: https://github.com/jchandler187/portkeep
+    homepage: https://github.com/lowwattlabs/portkeep
     description: Port management + security for self-hosted infrastructure

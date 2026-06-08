@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jchandler187/portkeep/internal/portscanner"
+	"github.com/lowwattlabs/portkeep/internal/portscanner"
 )
 
 // PortScore holds the scored result for a single open port.

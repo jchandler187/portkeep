@@ -166,9 +166,9 @@ Stored in `~/.portkeep/cache/db.json` (JSON, 0600 permissions).
 go build -o portkeep .
 
 # Release build (ldflags inject version)
-go build -ldflags "-X github.com/jchandler187/portkeep/cmd.version=v0.1.0 \
-                   -X github.com/jchandler187/portkeep/cmd.commit=$(git rev-parse --short HEAD) \
-                   -X github.com/jchandler187/portkeep/cmd.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+go build -ldflags "-X github.com/lowwattlabs/portkeep/cmd.version=v0.1.0 \
+                   -X github.com/lowwattlabs/portkeep/cmd.commit=$(git rev-parse --short HEAD) \
+                   -X github.com/lowwattlabs/portkeep/cmd.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   -o portkeep .
 
 # Cross-compile

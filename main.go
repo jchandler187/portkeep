@@ -1,6 +1,6 @@
 package main
 
-import "github.com/jchandler187/portkeep/cmd"
+import "github.com/lowwattlabs/portkeep/cmd"
 
 func main() {
 	cmd.Execute()

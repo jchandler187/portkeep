@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jchandler187/portkeep/internal/alert"
-	"github.com/jchandler187/portkeep/internal/config"
-	"github.com/jchandler187/portkeep/internal/portscanner"
+	"github.com/lowwattlabs/portkeep/internal/alert"
+	"github.com/lowwattlabs/portkeep/internal/config"
+	"github.com/lowwattlabs/portkeep/internal/portscanner"
 	"github.com/spf13/cobra"
 )
 

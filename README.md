@@ -122,21 +122,21 @@ All commands support `--json` for scripting and `--quiet` for cron.
 
 **From binary (Linux/macOS):**
 ```bash
-# Download from https://github.com/jchandler187/portkeep/releases/latest
-curl -sSL https://github.com/jchandler187/portkeep/releases/download/v0.1.0/portkeep_0.1.0_linux_amd64.tar.gz | tar xz
+# Download from https://github.com/lowwattlabs/portkeep/releases/latest
+curl -sSL https://github.com/lowwattlabs/portkeep/releases/download/v0.1.0/portkeep_0.1.0_linux_amd64.tar.gz | tar xz
 sudo mv portkeep /usr/local/bin/
 ```
 
 **From source (requires Go 1.22+):**
 ```bash
-git clone https://github.com/jchandler187/portkeep.git
+git clone https://github.com/lowwattlabs/portkeep.git
 cd portkeep && go build -o portkeep .
 sudo mv portkeep /usr/local/bin/
 ```
 
 **Homebrew tap (macOS / Linux):**
 ```bash
-brew tap jchandler187/tap
+brew tap lowwattlabs/tap
 brew install portkeep
 ```
 
@@ -199,7 +199,7 @@ Cloud-hosted attack surface management platforms typically cost $100+/month per 
 
 ## OpenClaw Plugin
 
-PortKeep is also available as an [OpenClaw tool plugin](https://clawhub.ai/jchandler187/portkeep). Install it and any OpenClaw agent can scan, audit, drift-check, and claim ports — including remote nodes — without knowing the CLI.
+PortKeep is also available as an [OpenClaw tool plugin](https://clawhub.ai/lowwattlabs/portkeep). Install it and any OpenClaw agent can scan, audit, drift-check, and claim ports — including remote nodes — without knowing the CLI.
 
 ```bash
 openclaw plugins install portkeep
@@ -209,15 +209,15 @@ Six tools: `portkeep_scan`, `portkeep_audit`, `portkeep_drift`, `portkeep_claim`
 
 ## Install
 
-Download the latest binary from [GitHub Releases](https://github.com/jchandler187/portkeep/releases) for your platform:
+Download the latest binary from [GitHub Releases](https://github.com/lowwattlabs/portkeep/releases) for your platform:
 
 ```bash
 # Linux amd64
-curl -sL https://github.com/jchandler187/portkeep/releases/latest/download/portkeep_linux_amd64.tar.gz | tar xz
+curl -sL https://github.com/lowwattlabs/portkeep/releases/latest/download/portkeep_linux_amd64.tar.gz | tar xz
 sudo mv portkeep /usr/local/bin/
 
 # macOS (Apple Silicon)
-curl -sL https://github.com/jchandler187/portkeep/releases/latest/download/portkeep_darwin_arm64.tar.gz | tar xz
+curl -sL https://github.com/lowwattlabs/portkeep/releases/latest/download/portkeep_darwin_arm64.tar.gz | tar xz
 sudo mv portkeep /usr/local/bin/
 
 # Verify
@@ -245,7 +245,7 @@ MIT
 
 ## Author
 
-Jason Chandler · [Low Watt Labs](https://github.com/jchandler187)
+Jason Chandler · [Low Watt Labs](https://github.com/lowwattlabs)
 
 ---
 

@@ -5,6 +5,38 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+/** Commands that access remote nodes via SSH or external threat intel feeds.
+ *  Blocked unless the user has explicitly enabled remote operations in config. */
+const REMOTE_COMMANDS = new Set(["sync"]);
+const REMOTE_FLAGS = new Set(["--node", "--all"]);
+
+/** Check whether the given args will trigger a remote operation.
+ *  Throws if remote access is attempted without allowRemote enabled. */
+function checkRemoteAccess(args: string[], allowRemote: boolean): void {
+  const hasRemoteFlag = args.some(a => REMOTE_FLAGS.has(a));
+  const isRemoteCommand = REMOTE_COMMANDS.has(args[0]);
+
+  if (!hasRemoteFlag && !isRemoteCommand) return; // local-only, no guard needed
+
+  if (!allowRemote) {
+    const isNodeArg = args.some((a, i) => a === "--node" && i + 1 < args.length);
+    const nodeName = isNodeArg ? args[args.indexOf("--node") + 1] : null;
+    const isAll = args.includes("--all");
+    const target = isRemoteCommand
+      ? "external threat intel feeds over the internet"
+      : isAll
+        ? "all registered remote nodes via SSH"
+        : nodeName
+          ? `remote node \"${nodeName}\" via SSH`
+          : "a remote node via SSH";
+    throw new Error(
+      `Blocked: this operation would access ${target}. ` +
+      `Set allowRemote: true in plugin config to enable remote operations. ` +
+      `Only enable if you trust the agent to scan remote hosts and contact external feeds.`
+    );
+  }
+}
+
 /** Resolve the portkeep binary path.
  *  Priority: config.binaryPath > PORTKEEP_BIN env > /usr/local/bin/portkeep (default absolute path).
  *  Avoids bare PATH resolution to prevent PATH hijacking (SkillSpector finding).
@@ -46,7 +78,9 @@ function extractJSON(output: string): Record<string, unknown> | string {
  *  drift is found, which is intentional (useful for cron). We still want
  *  the JSON output in that case.
  */
-async function runPortkeep(args: string[], config?: { binaryPath?: string }, timeoutMs = 30000): Promise<Record<string, unknown> | string> {
+type PortkeepConfig = { binaryPath?: string; allowRemote?: boolean };
+async function runPortkeep(args: string[], config?: PortkeepConfig, timeoutMs = 30000): Promise<Record<string, unknown> | string> {
+  checkRemoteAccess(args, config?.allowRemote === true);
   const bin = resolveBinary(config?.binaryPath);
   const allArgs = [...args, "--json"];
   try {
@@ -78,7 +112,13 @@ export default defineToolPlugin({
     binaryPath: Type.Optional(
       Type.String({
         description:
-          "Absolute path to the portkeep binary. Defaults to 'portkeep' (resolved from PATH).",
+          "Absolute path to the portkeep binary. Defaults to /usr/local/bin/portkeep (not PATH-resolved).",
+      })
+    ),
+    allowRemote: Type.Optional(
+      Type.Boolean({
+        description:
+          "Allow remote operations: SSH scanning of remote nodes and external threat intel sync. Default: false. Enable only if you trust the agent to access remote hosts and contact external feeds.",
       })
     ),
   }),

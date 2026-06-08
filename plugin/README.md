@@ -39,13 +39,18 @@ openclaw plugins install clawhub:portkeep
 
 Set `binaryPath` in plugin config to pin the exact binary location. If unset, the plugin uses `$PORTKEEP_BIN` or falls back to `/usr/local/bin/portkeep` — **not** bare PATH resolution, to prevent PATH hijacking.
 
+**Remote operations are blocked by default.** To enable SSH scanning of remote nodes and external threat intel sync, set `allowRemote: true`:
+
 ```json
 {
   "portkeep": {
-    "binaryPath": "/usr/local/bin/portkeep"
+    "binaryPath": "/usr/local/bin/portkeep",
+    "allowRemote": true
   }
 }
 ```
+
+Without `allowRemote`, any tool call that would access a remote node (`--node`, `--all`) or external feeds (`sync`) throws an error instead of executing. Local-only operations (scanning the host machine, claiming ports, listing claims) work without this flag.
 
 ## ⚠️ Network & Privacy Disclosures
 

@@ -8,7 +8,7 @@ The interface is the product. Every command should feel obvious after using it o
 
 1. **Defaults are smart.** Zero flags for 90% of use. `portkeep scan` just works.
 2. **Output is skimmable.** Tables for lists, color for severity, one line per port.
-3. **Errors are actionable.** Not "connection refused" — "Node-2 (192.168.1.86) unreachable on SSH. Key at ~/.ssh/id_ed25519. Diagnose: `ssh node2`"
+3. **Errors are actionable.** Not "connection refused" — "myserver (10.0.0.50) unreachable on SSH. Key at ~/.ssh/id_ed25519. Diagnose: `ssh myserver`"
 4. **Pipes work.** `--json` on everything. `--quiet` kills all output except errors. Exit codes: 0=good, 1=issues, 2=error.
 5. **Learn in 30 seconds.** `portkeep help` fits one screen.
 
@@ -72,9 +72,9 @@ PORT   PROTO   ADDRESS       SCOPE      PID    PROCESS
 
 Remote node:
 ```
-$ portkeep scan --node node2
+$ portkeep scan --node myserver
 
-node2 — 6 ports (1 loopback · 2 LAN · 3 WAN)
+myserver — 6 ports (1 loopback · 2 LAN · 3 WAN)
 
 PORT   PROTO   ADDRESS       SCOPE   PID   PROCESS
 22     tcp     0.0.0.0       🔴wan    892   sshd
@@ -274,15 +274,15 @@ Claim it:    portkeep claim 44707 --service <name>
 ## Multi-Node
 
 ```
-$ portkeep node add node2 --host 192.168.1.86 --ssh-key ~/.ssh/id_ed25519 --label dev
+$ portkeep node add myserver --host 10.0.0.50 --ssh-key ~/.ssh/id_ed25519 --label dev
 
-✓ Node node2 registered
+✓ Node myserver registered
 
 $ portkeep node list
 
 NODE    HOST             PORTS  LAST SCAN         STATUS
 node1   127.0.0.1        18     5 min ago          ✓ online
-node2   192.168.1.86     6      2 min ago          ✓ online
+myserver   10.0.0.50     6      2 min ago          ✓ online
 ```
 
 ---

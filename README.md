@@ -144,10 +144,10 @@ brew install portkeep
 
 ```bash
 # Add a remote node (key-only SSH auth)
-portkeep node add node2 --host 192.168.1.86 --ssh-key ~/.ssh/id_ed25519
+portkeep node add myserver --host 10.0.0.50 --ssh-key ~/.ssh/id_ed25519
 
 # Scan a remote node
-portkeep scan --node node2
+portkeep scan --node myserver
 ```
 
 ## Daemon mode

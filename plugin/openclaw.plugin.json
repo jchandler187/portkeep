@@ -1,0 +1,28 @@
+{
+  "id": "portkeep",
+  "name": "PortKeep",
+  "description": "Port management and security auditing for self-hosted infrastructure. Discover, claim, and audit every listening port across local and remote nodes. Detect drift, score attack surface, and cross-reference against live threat intelligence.",
+  "version": "1.0.6",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "binaryPath": {
+        "type": "string",
+        "description": "Absolute path to the portkeep binary. Defaults to 'portkeep' (resolved from PATH)."
+      }
+    }
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "portkeep_scan",
+      "portkeep_audit",
+      "portkeep_drift",
+      "portkeep_claim",
+      "portkeep_list",
+      "portkeep_sync"
+    ]
+  }
+}

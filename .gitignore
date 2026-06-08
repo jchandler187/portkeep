@@ -32,3 +32,6 @@ config.yaml
 
 # NVD cache
 nvd-cache/
+# Plugin
+plugin/node_modules/
+plugin/dist/

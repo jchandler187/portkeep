@@ -11,7 +11,7 @@ import (
 var nodeCmd = &cobra.Command{
 	Use:   "node",
 	Short: "Manage remote nodes for multi-node scanning",
-	Example: `  portkeep node add node2 --host 192.168.1.86 --ssh-key ~/.ssh/id_ed25519
+	Example: `  portkeep node add myserver --host 10.0.0.50 --ssh-key ~/.ssh/id_ed25519
   portkeep node list
   portkeep node health`,
 }

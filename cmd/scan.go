@@ -17,7 +17,7 @@ var scanCmd = &cobra.Command{
 	Long: `Discover all listening TCP and UDP ports on the local host.
 Uses /proc/net/tcp on Linux for fast, zero-dependency scanning.`,
 	Example: `  portkeep scan
-  portkeep scan --node node2
+  portkeep scan --node myserver
   portkeep scan --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		nodeName := nodeFlag

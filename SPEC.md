@@ -243,8 +243,8 @@ Self-hosted, bare-metal-first port management + security tool. One binary, one c
     node1:
       host: 127.0.0.1
       labels: [prod]
-    node2:
-      host: 192.168.1.86
+    myserver:
+      host: 10.0.0.50
       ssh_key: ~/.ssh/id_ed25519
       labels: [dev]
 

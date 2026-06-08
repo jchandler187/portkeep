@@ -12,7 +12,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all registered port claims",
 	Example: `  portkeep list
-  portkeep list --node node2
+  portkeep list --node myserver
   portkeep list --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		rows, err := db.Query(`SELECT port, protocol, service_name, declared_bind, port_range, owner, note, created_at

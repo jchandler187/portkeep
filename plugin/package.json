@@ -1,6 +1,6 @@
 {
   "name": "portkeep",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Port management and security auditing for self-hosted infrastructure. Discover, claim, and audit every listening port across local and remote nodes. Detect drift, score attack surface, and cross-reference against live threat intelligence.",
   "type": "module",
   "main": "./dist/index.js",

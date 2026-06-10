@@ -1,8 +1,8 @@
 {
   "id": "portkeep",
   "name": "PortKeep",
-  "description": "Port management and security auditing for self-hosted infrastructure. Discover, claim, and audit every listening port across local and remote nodes. Detect drift, score attack surface, and cross-reference against live threat intelligence.",
-  "version": "1.0.6",
+  "description": "Port management and security auditing for self-hosted infrastructure. Discover, claim, and audit every listening port across local and remote nodes. Detect drift, score attack surface, and cross-reference against live threat intelligence including EPSS exploit probability scores.",
+  "version": "1.2.0",
   "configSchema": {
     "type": "object",
     "properties": {

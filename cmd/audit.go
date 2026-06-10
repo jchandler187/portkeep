@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/lowwattlabs/portkeep/internal/config"
 	"github.com/lowwattlabs/portkeep/internal/firewall"
@@ -16,7 +17,7 @@ var auditCmd = &cobra.Command{
 	Short: "Full security audit — score + risk flags + threat intel + firewall check",
 	Long: `Run a complete security audit of all listening ports.
 Produces per-port risk flags, an overall exposure score, firewall cross-reference,
-and threat intelligence findings (C2 port matches, CISA-KEV CVE hits).
+and threat intelligence findings (C2 port matches, CISA-KEV CVE hits with EPSS exploit probability scores).
 Run 'portkeep sync' first to populate the threat intel cache.`,
 	Example: `  portkeep audit
   portkeep audit --score
@@ -69,7 +70,7 @@ Run 'portkeep sync' first to populate the threat intel cache.`,
 		totalScore := 0
 		scopeCounts := map[string]int{"loopback": 0, "lan": 0, "tailscale": 0, "wan": 0, "wildcard": 0}
 		criticalCount, highCount, warningCount := 0, 0, 0
-		kevHitCount := 0
+		kevHitCount, epssHitCount := 0, 0
 		c2HitCount := 0
 
 		for _, p := range ports {
@@ -149,7 +150,20 @@ Run 'portkeep sync' first to populate the threat intel cache.`,
 			if serviceHint != "" {
 				if kevMatches := tiDB.KEVMatchesForService(serviceHint); len(kevMatches) > 0 {
 					score += 10
-					flags = append(flags, fmt.Sprintf("THREAT: %d active KEV CVE(s) for %s", len(kevMatches), serviceHint))
+					// Include EPSS probability scores for each KEV CVE
+				epssParts := make([]string, 0, len(kevMatches))
+				for _, cve := range kevMatches {
+					epss := tiDB.EPSSScore(cve.CVEID)
+					if epss > 0 {
+						epssParts = append(epssParts, fmt.Sprintf("%s (%.1f%%)", cve.CVEID, epss*100))
+					} else {
+						epssParts = append(epssParts, cve.CVEID)
+				}
+				if epss >= 0.5 {
+					epssHitCount++
+					}
+				}
+				flags = append(flags, fmt.Sprintf("THREAT: %d active KEV CVE(s) for %s [%s]", len(kevMatches), serviceHint, strings.Join(epssParts, ", ")))
 					kevHitCount++
 				}
 			}
@@ -199,6 +213,7 @@ Run 'portkeep sync' first to populate the threat intel cache.`,
 				"threat_intel":    tiDB.AgeString(),
 				"kev_hits":        kevHitCount,
 				"c2_hits":         c2HitCount,
+				"epss_hits":       epssHitCount,
 				"summary": map[string]int{
 					"critical": criticalCount,
 					"high":     highCount,
@@ -223,6 +238,9 @@ Run 'portkeep sync' first to populate the threat intel cache.`,
 		}
 		if kevHitCount > 0 {
 			fmt.Printf("  🔴 %d port(s) running software with active CISA-KEV CVEs\n", kevHitCount)
+		if epssHitCount > 0 {
+			fmt.Printf("  🟠 %d of those CVEs have high EPSS exploit probability (≥50%%)\n", epssHitCount)
+		}
 		}
 		if c2HitCount == 0 && kevHitCount == 0 && tiDB.LastSync != "" {
 			fmt.Println("  ✓ no C2 port or KEV CVE matches")

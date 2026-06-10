@@ -535,7 +535,7 @@ func fetchEPSS(timeout time.Duration) (map[string]float64, error) {
 }
 
 // fetchFeodo fetches the Feodo C2 botnet IP/port blocklist.
-// Note: Feodo datasets are currently empty as of 2026 (law enforcement takedowns succeeded). This source is included for when new C2 infrastructure is tracked.
+// Note: Feodo tracker lists active and recently offline C2 infrastructure. Entries may be offline status; these are retained for drift detection.
 func fetchFeodo(timeout time.Duration) ([]C2Port, error) {
 	data, err := doGet(urlFeodo, "", timeout)
 	if err != nil {
